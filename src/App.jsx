@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState ,useEffect } from 'react'
 import {
   createBrowserRouter,
   createRoutesFromElements,
@@ -25,6 +25,19 @@ function Root( {isAuth} ) {
 
 
 function App() {
+  
+useEffect(() => {
+    // 1. שליפת פרטי המשתמש מטלגרם
+    const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
+    
+    if (telegramUser) 
+      {
+        console.log("ID המשתמש:", telegramUser.id);
+  console.log("שם המשתמש:", telegramUser.first_name);
+  console.log("Username:", telegramUser.username);
+      }
+ 
+  }, []);
 
 const [isAuth, setIsAuth] = useState(true)
   console.log(isAuth,"this is the first isAuth")
