@@ -6,9 +6,13 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react(), tailwindcss(),],
   
-  server: {
-    allowedHosts: [
-      
-    ]
+  // server: {
+  //   allowedHosts: ['https://stones-scanners-holdings-prints.trycloudflare.com']
+
+  // }
+      server: {
+    allowedHosts: true, // זה יאשר אוטומטית כל כתובת trycloudflare.com שתקבל
+    host: true,         // מאפשר גישה מרשתות חיצוניות
+    strictPort: true    // שומר על פורט 5173 ולא עובר לפורט אחר
   }
 })

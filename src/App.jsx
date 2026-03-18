@@ -1,4 +1,6 @@
-import { useState ,useEffect } from 'react'
+import { useState ,useEffect ,useContext } from 'react'
+
+
 import {
   createBrowserRouter,
   createRoutesFromElements,
@@ -9,45 +11,47 @@ import {
 } from 'react-router-dom'
 import HomePage from "./components/Pages/Privet/HomePage.jsx"
 import Page404 from './components/Pages/Public/Page404.jsx'
+import { AuthContext } from './components/Context/AuthGlobalContxt.jsx'
+import Loading from '../UI/Loading.jsx'
+import Nav from '../UI/Nav.jsx'
 
-
-
-function Root( {isAuth} ) {
+function Root( {isAuth , isLoading} ) {
 
   // מציג את כל שאר האוטלט שלא מוגנים ציבורית ולא פרטיים שהם הכללים והשכבה הכללית 
   // console.log(isAuth,"this is the second isAuth")
   return (
     <div>
-    {isAuth ? <Outlet /> : <Page404 />} 
+      {isLoading ? <Loading /> : 
+      isAuth ? (<div > 
+        <Outlet />
+        <Nav />
+      </div>
+       ):
+       <Page404 />}
     </div>
   )
 }
 
 
 function App() {
-  
-useEffect(() => {
-    // 1. שליפת פרטי המשתמש מטלגרם
-    const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
-    
-    if (telegramUser) 
-      {
-        console.log("ID המשתמש:", telegramUser.id);
-  console.log("שם המשתמש:", telegramUser.first_name);
-  console.log("Username:", telegramUser.username);
-      }
- 
-  }, []);
+  const{ isAuth , isLoading } = useContext(AuthContext)
+console.log(isLoading,"this is the isLoading")
+const test=true;
 
-const [isAuth, setIsAuth] = useState(true)
   console.log(isAuth,"this is the first isAuth")
     const router = createBrowserRouter(
     createRoutesFromElements(
-      <Route path="/" element={<Root isAuth={isAuth} />} errorElement={<Page404 />}>
+      // <Route path="/" element={<Root isAuth={isAuth} isLoading={isLoading} />} errorElement={<Page404 />}>
+       <Route path="/" element={<Root isAuth={test} isLoading={isLoading} />} errorElement={<Page404 />}> 
         {/* Main Routes */}
         <Route index element={<HomePage />} />
    
-   
+             <Route
+            path="CreateNewPublish"
+            lazy={async () => ({
+              Component: (await import('./components/Pages/Privet/NewPost/CreateNewPublish.jsx')).default,
+            })}
+          />
    
       
 
