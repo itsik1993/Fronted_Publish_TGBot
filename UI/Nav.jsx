@@ -12,8 +12,8 @@ import {
       const [activeNav, setActiveNav] = useState(0);
           const navItems = [
     { icon: "🏠", label: "ראשי", navigateTo: "/" },
-    { icon: "📝", label: "מודעות" },
-    { icon: "⚙️", label: "הגדרות" },
+    { icon: "📝", label: "מודעות", navigateTo: "/AllPosts" },
+    { icon: "⚙️", label: "הגדרות", navigateTo: "/Settings" },
   ];
        return (
       <div className="sticky bottom-0 z-10 flex justify-around bg-[rgba(15,15,26,0.95)] backdrop-blur-xl border-t border-white/[0.08] py-1 mt-auto">

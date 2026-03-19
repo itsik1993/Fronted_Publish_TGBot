@@ -72,7 +72,12 @@ export default function App() {
 
         {/* Manage Ads — full width */}
         <button
-          onClick={() => showToast("📋 פותח ניהול מודעות...")}
+          onClick={() => {
+
+            showToast("📋 פותח ניהול מודעות...")
+            navigate("/AllPosts")
+            
+          }}
           className="col-span-2 flex flex-row items-center justify-between gap-2 bg-indigo-500/[0.08] border border-indigo-500/20 text-indigo-300 font-semibold text-[15px] rounded-2xl px-5 py-4 transition-all duration-200 hover:bg-indigo-500/[0.15] hover:border-indigo-500/40 hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
         >
           <div className="flex items-center gap-2">
@@ -87,16 +92,28 @@ export default function App() {
 
         {/* Add Group */}
         <button
-          onClick={() => showToast("➕ הוספת קבוצה")}
+          onClick={() => {
+
+            showToast("➕ ניהול קבוצות")
+          
+            navigate("/ManageGroups")
+          } }
           className="flex flex-col items-center gap-1.5 bg-white/[0.06] border border-white/10 text-gray-200 font-semibold text-[13px] rounded-2xl px-3 py-3.5 transition-all duration-200 hover:bg-white/10 hover:border-white/20 hover:-translate-y-0.5 active:scale-[0.97] cursor-pointer font-sans"
         >
           <span className="text-[22px]">👥</span>
-          הוסף קבוצה
+         ניהול קבוצות
         </button>
 
         {/* Add Manager */}
         <button
-          onClick={() => showToast("🙋 הוספת מנהל")}
+          onClick={() =>
+          {
+            showToast("🙋 הוספת מנהל")
+            navigate("/Managers")
+
+          }
+          
+          }
           className="flex flex-col items-center gap-1.5 bg-white/[0.06] border border-white/10 text-gray-200 font-semibold text-[13px] rounded-2xl px-3 py-3.5 transition-all duration-200 hover:bg-white/10 hover:border-white/20 hover:-translate-y-0.5 active:scale-[0.97] cursor-pointer font-sans"
         >
           <span className="text-[22px]">🙋</span>

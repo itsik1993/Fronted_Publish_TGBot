@@ -9,7 +9,7 @@ import {
   Outlet,
   Navigate
 } from 'react-router-dom'
-import HomePage from "./components/Pages/Privet/HomePage.jsx"
+import HomePage from "./components/Pages/Privet/HomePage/HomePage.jsx"
 import Page404 from './components/Pages/Public/Page404.jsx'
 import { AuthContext } from './components/Context/AuthGlobalContxt.jsx'
 import Loading from '../UI/Loading.jsx'
@@ -50,6 +50,24 @@ const test=true;
             path="CreateNewPublish"
             lazy={async () => ({
               Component: (await import('./components/Pages/Privet/NewPost/CreateNewPublish.jsx')).default,
+            })}
+          />
+              <Route
+            path="ManageGroups"
+            lazy={async () => ({
+              Component: (await import('./components/Pages/Privet/Groups/ManageGroups.jsx')).default,
+            })}
+          />
+                   <Route
+            path="Managers"
+            lazy={async () => ({
+              Component: (await import('./components/Pages/Privet/Managers/ManagersPage.jsx')).default,
+            })}
+          />
+                         <Route
+            path="AllPosts"
+            lazy={async () => ({
+              Component: (await import('./components/Pages/Privet/PostsManage/AllPostManager.jsx')).default,
             })}
           />
    
