@@ -1,20 +1,56 @@
-import { useState } from "react";
+import { useState ,useEffect} from "react";
 import ContentSection from "./ContentSection.jsx";
-import LinksSection   from "./Linkssection.jsx";
-import MediaSection   from "./Mediasection.jsx";
-import TimingSection  from "./Timingsection.jsx";
-import GroupsSection  from "./Groupssection.jsx";
+import LinksSection from "./Linkssection.jsx";
+import MediaSection from "./Mediasection.jsx";
+import TimingSection from "./Timingsection.jsx";
+import GroupsSection from "./Groupssection.jsx";
+import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import axios from 'axios';
 
 export default function CreateAd() {
   const [form, setForm] = useState({
-    name: "", text: "",
-    links: [[{ name: "", url: "" }]],
-    media: null,
-    startDate: "", startTime: "09:00",
-    endDate: "",   endTime: "",
-    repetition: 60,
-    isActive: true, pinMessage: false, deleteLast: false,
+    MessagesName: "",
+    Messages_Text: "",
+    Messages_Links: [[{ name: "", url: "" }]],
+    Messages_Media: null,
+    DateStart: "", FirstTimeStart: "",
+    DateEnd: "", EndTime: "",
+    Repetition: "",
+    IsActive: true,
+    Pin_message: false,
+    DeleteLaste: false,
+    GroupIds: [],
   });
+
+
+  useEffect(() => { 
+    console.log("Form data updated:", form);
+  }, [form]);
+
+
+  // שליפת הקבוצות הקיימות מהשרת
+  const {
+    data: AllExistGroupsData,
+    isLoading: AllExistGroupsisLoading,
+    error: AllExistGroupsError,
+    isError: isAllExistGroupsError
+  } = useQuery({
+    queryKey: ["get_AllExistGroupsData"],
+    queryFn: async () => {
+      const response = await axios.get(`/GroupList/AllExistGroupsList`);
+      return response.data;
+    },
+    select: (data) => data?.data || data, // טיפול גמיש בנתונים
+    staleTime: 1000 * 60,
+  });
+
+const handelSubmit = () => {
+  // כאן תוכל להוסיף את הלוגיקה לשמירת המודעה, למשל קריאה ל-API
+  console.log("Submitting form data:", form);
+}
+
+
 
   return (
     <div className="relative flex flex-col w-full bg-[#0f0f1a] font-sans" dir="rtl">
@@ -33,12 +69,13 @@ export default function CreateAd() {
 
       <div className="relative z-10 px-5 pb-6">
         <ContentSection form={form} setForm={setForm} />
-        <LinksSection   form={form} setForm={setForm} />
-        <MediaSection   form={form} setForm={setForm} />
-        <TimingSection  form={form} setForm={setForm} />
-        <GroupsSection  form={form} />
+        <LinksSection form={form} setForm={setForm} />
+        <MediaSection form={form} setForm={setForm} />
+        <TimingSection form={form} setForm={setForm} />
+        <GroupsSection form={form} setForm={setForm} AllExistGroupsData={AllExistGroupsData} />
 
-        <button className="w-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-semibold text-[15px] rounded-2xl py-4 border-none cursor-pointer shadow-[0_4px_20px_rgba(99,102,241,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(99,102,241,0.5)] active:scale-[0.98] mt-1">
+        <button className="w-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-semibold text-[15px] rounded-2xl py-4 border-none cursor-pointer shadow-[0_4px_20px_rgba(99,102,241,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(99,102,241,0.5)] active:scale-[0.98] mt-1"
+        onClick={handelSubmit}>
           ✅ שמור מודעה
         </button>
       </div>

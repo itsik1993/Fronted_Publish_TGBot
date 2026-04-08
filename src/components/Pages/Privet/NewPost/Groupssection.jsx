@@ -1,17 +1,12 @@
-import { useState } from "react";
+import { useState ,useEffect} from "react";
 
-const MOCK_GROUPS = [
-  { id: "1", name: "קבוצת פרסום ראשית" },
-  { id: "2", name: "VIP לקוחות" },
-  { id: "3", name: "מבצעים והנחות" },
-  { id: "4", name: "עדכונים שוטפים" },
-  { id: "5", name: "קהל יעד B" },
-];
+
 
 function Toggle({ checked, onChange }) {
   return (
     <button onClick={() => onChange(!checked)}
-      className={`relative w-11 h-6 rounded-full transition-all duration-300 border-none cursor-pointer shrink-0 ${checked ? "bg-indigo-500" : "bg-white/10"}`}>
+      className={`relative w-11 h-6 rounded-full transition-all duration-300 border-none cursor-pointer shrink-0 ${checked ? "bg-indigo-500" : "bg-white/10"}`}
+      >
       <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all duration-300 ${checked ? "right-0.5" : "left-0.5"}`} />
     </button>
   );
@@ -29,7 +24,9 @@ function FieldRow({ label, required = true, children }) {
   );
 }
 
-function GroupSettingsModal({ group, settings, onSave, onClose }) {
+
+
+function GroupSettingsModal({ group, settings, onSave, onClose ,setForm }) {
   const [local, setLocal] = useState(settings);
 
   return (
@@ -38,66 +35,76 @@ function GroupSettingsModal({ group, settings, onSave, onClose }) {
         onClick={e => e.stopPropagation()}>
 
         <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
-        <div className="text-base font-bold text-white mb-4 text-right">⚙️ הגדרות — {group.name}</div>
+        <div className="text-base font-bold text-white mb-4 text-right">⚙️ הגדרות — {group.GroupName}</div>
 
         <div className="flex flex-col gap-3">
 
           <FieldRow label="תאריך התחלה">
-            <input type="date" value={local.startDate}
-              onChange={e => setLocal({ ...local, startDate: e.target.value })}
+            <input type="date" value={local.DateStart}
+              onChange={e => setLocal({ ...local, DateStart: e.target.value })}
               className="bg-white/[0.06] border border-white/10 rounded-xl px-2 py-2 text-white text-sm font-mono text-center focus:outline-none focus:border-indigo-500/50" />
           </FieldRow>
 
           <FieldRow label="שעת התחלה">
-            <input type="time" value={local.startTime}
-              onChange={e => setLocal({ ...local, startTime: e.target.value })}
+            <input type="time" value={local.FirstTimeStart}
+              onChange={e => setLocal({ ...local, FirstTimeStart: e.target.value })}
               className="bg-white/[0.06] border border-white/10 rounded-xl px-3 py-2 text-white text-sm font-mono w-28 text-center focus:outline-none focus:border-indigo-500/50" />
           </FieldRow>
 
           <FieldRow label="תדירות (דקות)">
-            <input type="number" min="1" value={local.repetition}
-              onChange={e => setLocal({ ...local, repetition: e.target.value })}
+            <input type="number" min="1" value={local.Repetition}
+              onChange={e => setLocal({ ...local, Repetition: e.target.value })}
               className="bg-white/[0.06] border border-white/10 rounded-xl px-3 py-2 text-white text-sm w-20 text-center focus:outline-none focus:border-indigo-500/50" />
           </FieldRow>
 
           <FieldRow label="תאריך סיום" required={false}>
-            <input type="date" value={local.endDate}
-              onChange={e => setLocal({ ...local, endDate: e.target.value })}
+            <input type="date" value={local.DateEnd}
+              onChange={e => setLocal({ ...local, DateEnd: e.target.value })}
               className="bg-white/[0.06] border border-white/10 rounded-xl px-2 py-2 text-white text-sm font-mono text-center focus:outline-none focus:border-indigo-500/50" />
-            {local.endDate && (
-              <button onClick={() => setLocal({ ...local, endDate: "" })}
+            {local.DateEnd && (
+              <button onClick={() => setLocal({ ...local, DateEnd: "" })}
                 className="text-gray-600 text-[11px] hover:text-red-400 cursor-pointer bg-transparent border-none">✕</button>
             )}
           </FieldRow>
 
           <FieldRow label="שעת סיום" required={false}>
-            <input type="time" value={local.endTime}
-              onChange={e => setLocal({ ...local, endTime: e.target.value })}
+            <input type="time" value={local.EndTime}
+              onChange={e => setLocal({ ...local, EndTime: e.target.value })}
               className="bg-white/[0.06] border border-white/10 rounded-xl px-3 py-2 text-white text-sm font-mono w-28 text-center focus:outline-none focus:border-indigo-500/50" />
-            {local.endTime && (
-              <button onClick={() => setLocal({ ...local, endTime: "" })}
+            {local.EndTime && (
+              <button onClick={() => setLocal({ ...local, EndTime: "" })}
                 className="text-gray-600 text-[11px] hover:text-red-400 cursor-pointer bg-transparent border-none">✕</button>
             )}
           </FieldRow>
 
           <div className="pt-2 border-t border-white/[0.06] flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <Toggle checked={local.pinMessage} onChange={v => setLocal({ ...local, pinMessage: v })} />
+              <Toggle checked={local.Pin_message} onChange={v => setLocal({ ...local, Pin_message: v })} />
               <span className="text-sm text-gray-400">הצמד הודעה</span>
             </div>
             <div className="flex items-center justify-between">
-              <Toggle checked={local.deleteLast} onChange={v => setLocal({ ...local, deleteLast: v })} />
+              <Toggle checked={local.DeleteLaste} onChange={v => setLocal({ ...local, DeleteLaste: v })} />
               <span className="text-sm text-gray-400">מחק הודעה קודמת</span>
             </div>
             <div className="flex items-center justify-between">
-              <Toggle checked={local.isActive} onChange={v => setLocal({ ...local, isActive: v })} />
+              <Toggle checked={local.IsActive} onChange={v => setLocal({ ...local, IsActive: v })} />
               <span className="text-sm text-gray-400">פעיל בקבוצה זו</span>
             </div>
           </div>
 
         </div>
 
-        <button onClick={() => { onSave(local); onClose(); }}
+        <button onClick={() => { 
+          onSave(local); onClose(); 
+          setForm(prev => ({ 
+    ...prev, 
+    // אנחנו יוצרים אובייקט חדש עבור groupsSettings
+    groupsSettings: {
+      ...prev.groupsSettings, // שומרים את כל הקבוצות הקודמות שהיו שם
+      [group.TelegramGroupId]: local // מוסיפים/מעדכנים רק את הקבוצה הנוכחית
+    }
+  }));
+        }}
           className="mt-5 w-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-semibold text-[15px] rounded-2xl py-3.5 border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]">
           שמור הגדרות
         </button>
@@ -106,21 +113,47 @@ function GroupSettingsModal({ group, settings, onSave, onClose }) {
   );
 }
 
-export default function GroupsSection({ form }) {
+export default function GroupsSection({ form  ,setForm ,AllExistGroupsData}) {
   const [groupsOpen,     setGroupsOpen]     = useState(false);
   const [selectedGroups, setSelectedGroups] = useState([]);
   const [groupSettings,  setGroupSettings]  = useState({});
   const [editingGroup,   setEditingGroup]   = useState(null);
+  const [existingGroups, setExistingGroups] = useState(AllExistGroupsData || []);
 
+
+
+
+
+
+
+  // בודקת אם ה-ID כבר קיים במערך selectedGroups. אם כן - מסננת אותו החוצה
   const toggleGroup = id =>
     setSelectedGroups(prev => prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]);
 
+
+//   המטרה: שליפת ההגדרות עבור קבוצה ספציפית.
+// הלוגיקה: זו פונקציה חכמה. היא בודקת: האם יש הגדרות מותאמות ב-groupSettings?
+// אם כן: מחזירה אותן.
+// אם לא: מחזירה אובייקט "ברירת מחדל" שמבוסס על הערכים הנוכחיים של ה-form הראשי (זמן התחלה, חזרתיות וכו').
   const getGroupSettings = id => groupSettings[id] || {
-    startDate: form.startDate, startTime: form.startTime,
-    endDate: "", endTime: "",
-    repetition: form.repetition,
-    pinMessage: form.pinMessage, deleteLast: form.deleteLast, isActive: true,
+    DateStart: form.DateStart,
+     FirstTimeStart: form.FirstTimeStart,
+    DateEnd: form.DateEnd,
+    EndTime: form.EndTime,
+    Repetition: form.Repetition,
+    Pin_message: form.Pin_message, 
+    DeleteLaste: form.DeleteLaste,
+     IsActive: true,
   };
+
+  useEffect(() => {
+    setForm(prev => ({ ...prev, GroupIds: selectedGroups }));
+  }, [selectedGroups]);
+
+  useEffect(() => {
+    console.log("bbbb",form)
+    console.log("S88888:", groupSettings);
+  }, [groupSettings, selectedGroups]);
 
   return (
     <>
@@ -142,18 +175,18 @@ export default function GroupsSection({ form }) {
 
         {groupsOpen && (
           <div className="border-t border-white/[0.06]">
-            {MOCK_GROUPS.map(group => {
-              const selected = selectedGroups.includes(group.id);
-              const custom   = !!groupSettings[group.id];
+            {existingGroups.map(group => {
+              const selected = selectedGroups.includes(group.TelegramGroupId);
+              const custom   = !!groupSettings[group.TelegramGroupId];
               return (
-                <div key={group.id}
+                <div key={group.TelegramGroupId}
                   className={`flex items-center justify-between px-4 py-3 border-b border-white/[0.04] last:border-none transition-colors ${selected ? "bg-indigo-500/[0.07]" : ""}`}>
-                  <div className="flex items-center gap-3 flex-1" onClick={() => toggleGroup(group.id)}>
+                  <div className="flex items-center gap-3 flex-1" onClick={() => toggleGroup(group.TelegramGroupId)}>
                     <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center cursor-pointer transition-all shrink-0 ${selected ? "bg-indigo-500 border-indigo-500" : "border-white/20 bg-transparent"}`}>
                       {selected && <span className="text-white text-[11px] font-bold">✓</span>}
                     </div>
                     <div className="text-right cursor-pointer">
-                      <div className="text-sm text-gray-200 font-medium">{group.name}</div>
+                      <div className="text-sm text-gray-200 font-medium">{group.GroupName}</div>
                       {custom && <div className="text-[10px] text-amber-400 mt-0.5">⚙ הגדרות מותאמות</div>}
                     </div>
                   </div>
@@ -173,9 +206,10 @@ export default function GroupsSection({ form }) {
       {editingGroup && (
         <GroupSettingsModal
           group={editingGroup}
-          settings={getGroupSettings(editingGroup.id)}
-          onSave={s => setGroupSettings({ ...groupSettings, [editingGroup.id]: s })}
-          onClose={() => setEditingGroup(null)}
+          settings={getGroupSettings(editingGroup.TelegramGroupId)}
+          onSave={s => setGroupSettings({ ...groupSettings, [editingGroup.TelegramGroupId]: s })}
+          onClose={() => {setEditingGroup(null)}}
+          setForm={setForm}
         />
       )}
     </>

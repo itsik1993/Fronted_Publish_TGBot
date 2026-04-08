@@ -1,22 +1,16 @@
-import { useState } from "react";
+import React, { useState, useEffect, useContext } from 'react';
+import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import axios from 'axios';
 
 const ROLES = [
-  { id: "admin",   label: "Admin",   color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" },
-  { id: "manager", label: "Manager", color: "text-indigo-300", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
+  { id: "Admin", label: "Admin", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" },
+  { id: "Manager", label: "Manager", color: "text-indigo-300", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
 ];
 
-const MOCK_ADMINS = [
-  { id: "123456789", username: "@david_cohen",  name: "דוד כהן",    nickname: "דוד המנהל", role: "admin",   photo: "https://picsum.photos/seed/u1/80/80" },
-  { id: "987654321", username: "@sara_levi",    name: "שרה לוי",    nickname: "שרה עורכת", role: "admin",  photo: "https://picsum.photos/seed/u2/80/80" },
-  { id: "111222333", username: "@moshe_israel", name: "משה ישראל",  nickname: "",           role: "manager",  photo: "https://picsum.photos/seed/u3/80/80" },
-  { id: "444555666", username: "@yael_k",       name: "יעל קורן",   nickname: "תמיכה",     role: "manager", photo: "https://picsum.photos/seed/u4/80/80" },
-];
 
-const MOCK_SEARCH = [
-  { id: "777888999", username: "@nir_bar",     name: "ניר בר",      photo: "https://picsum.photos/seed/u5/80/80" },
-  { id: "222333444", username: "@hila_mizr",   name: "הילה מזרחי",  photo: "https://picsum.photos/seed/u6/80/80" },
-];
 
+// מתאים את התג לפי התפקיד
 function RoleBadge({ roleId }) {
   const role = ROLES.find(r => r.id === roleId);
   if (!role) return null;
@@ -27,6 +21,7 @@ function RoleBadge({ roleId }) {
   );
 }
 
+// המטרה של הפונקציה היא להציג תגית צבעונית ליד שם המנהל שמציינת את התפקיד שלו (Admin או Manager) עם עיצוב שונה לכל תפקיד. היא מקבלת את מזהה התפקיד (roleId) ומחפשת אותו במערך ROLES כדי למצוא את הפרטים המתאימים לעיצוב. אם נמצא תפקיד מתאים, היא מחזירה אלמנט <span> עם הטקסט של התפקיד והעיצוב המתאים לו. אם לא נמצא תפקיד מתאים, היא מחזירה null ולא מציגה כלום.
 function SectionCard({ icon, title, children }) {
   return (
     <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden mb-3">
@@ -38,6 +33,9 @@ function SectionCard({ icon, title, children }) {
     </div>
   );
 }
+
+
+// מודלים
 
 function ConfirmModal({ adminName, onConfirm, onCancel }) {
   return (
@@ -66,11 +64,13 @@ function ConfirmModal({ adminName, onConfirm, onCancel }) {
   );
 }
 
+
 function AddAdminModal({ admin, onSave, onClose }) {
   const [form, setForm] = useState({
     nickname: "",
     role: "editor",
   });
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
@@ -82,12 +82,12 @@ function AddAdminModal({ admin, onSave, onClose }) {
         {/* User preview */}
         <div className="flex items-center gap-3 mb-5 bg-white/[0.04] border border-white/[0.06] rounded-2xl px-4 py-3">
           <div className="w-11 h-11 rounded-full overflow-hidden shrink-0">
-            <img src={admin.photo} alt={admin.name} className="w-full h-full object-cover" />
+            <img src={admin.photo} alt={admin.NameOfUser} className="w-full h-full object-cover" />
           </div>
           <div className="text-right">
-            <div className="text-sm font-semibold text-white">{admin.name}</div>
-            <div className="text-[12px] text-indigo-300 font-mono">{admin.username}</div>
-            <div className="text-[11px] text-gray-600 mt-0.5">ID: {admin.id}</div>
+            <div className="text-sm font-semibold text-white">{admin.NameOfUser}</div>
+            <div className="text-[12px] text-indigo-300 font-mono">{admin.TelegramUserName}</div>
+            <div className="text-[11px] text-gray-600 mt-0.5">ID: {admin.TelegramUserId}</div>
           </div>
         </div>
 
@@ -109,11 +109,10 @@ function AddAdminModal({ admin, onSave, onClose }) {
           <div className="flex gap-2">
             {ROLES.map(role => (
               <button key={role.id} onClick={() => setForm({ ...form, role: role.id })}
-                className={`flex items-center justify-center py-2.5 rounded-xl border text-[13px] font-semibold cursor-pointer transition-all ${
-                  form.role === role.id
+                className={`flex items-center justify-center py-2.5 rounded-xl border text-[13px] font-semibold cursor-pointer transition-all ${form.role === role.id
                     ? `${role.bg} ${role.border} ${role.color}`
                     : "bg-white/[0.03] border-white/10 text-gray-500 hover:bg-white/[0.06]"
-                }`}>
+                  }`}>
                 {role.label}
               </button>
             ))}
@@ -129,41 +128,226 @@ function AddAdminModal({ admin, onSave, onClose }) {
   );
 }
 
-export default function ManagersPage() {
-  const [admins,       setAdmins]       = useState(MOCK_ADMINS);
-  const [searchQuery,  setSearchQuery]  = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching,  setIsSearching]  = useState(false);
-  const [filterQuery,  setFilterQuery]  = useState("");
-  const [addingAdmin,  setAddingAdmin]  = useState(null);
-  const [confirmAdmin, setConfirmAdmin] = useState(null);
-  const [addedIds,     setAddedIds]     = useState(new Set());
+function EditNicknameModal({ admin, onSave, onClose }) {
+  const [nickname, setNickname] = useState(admin.ManagerNick_Name || "");
 
-  const handleSearch = () => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-[430px] bg-[#1a1a2e] border border-white/10 rounded-t-3xl p-5 pb-8"
+        onClick={e => e.stopPropagation()}>
+        <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 bg-indigo-500/20">
+            {admin.photo
+              ? <img src={admin.photo} alt={admin.ManagerName} className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold">{admin.ManagerName[0]}</div>
+            }
+          </div>
+          <div className="text-right">
+            <div className="text-sm font-semibold text-white">{admin.ManagerName}</div>
+            <div className="text-[12px] text-indigo-300 font-mono">{admin.ManagersUserName}</div>
+          </div>
+        </div>
+
+        <div className="mb-5">
+          <div className="text-[11px] text-gray-500 mb-1.5 text-right">כינוי / תיאור <span className="text-gray-600">(אופציונלי)</span></div>
+          <input
+            type="text"
+            placeholder="לדוגמה: מנהל ערוץ ראשי"
+            value={nickname}
+            onChange={e => setNickname(e.target.value)}
+            autoFocus
+            className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors"
+          />
+        </div>
+
+        <button onClick={() => { onSave(nickname); onClose(); }}
+          className="w-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-semibold text-[15px] rounded-2xl py-3.5 border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]">
+          שמור
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+
+// שירות ראשי
+export default function ManagersPage() {
+  const queryClient = useQueryClient();
+  const allUsersAndGroups = [];
+  const [admins, setAdmins] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [filterQuery, setFilterQuery] = useState("");
+  const [addingAdmin, setAddingAdmin] = useState(null);
+  const [confirmAdmin, setConfirmAdmin] = useState(null);
+  const [addedIds, setAddedIds] = useState(new Set());
+  const [editingAdmin, setEditingAdmin] = useState(null);
+
+
+  // שליפת מנהלים קיימים מהשרת
+  const {
+    data: AllManagersData,
+    isLoading: AllManagersisLoading,
+    error: AllManagersError,
+    isError: isAllManagersError
+  } = useQuery({
+    queryKey: ["get_AllManagersData"],
+    queryFn: async () => {
+      const response = await axios.get(`/Managers/GetAllManagers`);
+      return response.data;
+    },
+    select: (data) => data?.data || data, // טיפול גמיש בנתונים
+    staleTime: 1000 * 60,
+  });
+
+
+
+  // שליפה לפי צורך חיפוש
+  const {
+    mutate: fetchAllUsers, // הפונקציה שתפעיל את השאילתה
+    data: GetAllUsersData,
+    isPending: GetAllUsersisLoading, // בגרסאות חדשות זה isPending במקום isLoading
+    error: GetAllUsersError,
+    isError: isGetAllUsersError
+  } = useMutation({
+    mutationFn: async () => {
+      // כאן אנחנו שולחים את ה-Body שמתקבל מהקריאה לפונקציה
+      const response = await axios.post(`/Managers/SerchAddNewUsersToManager`, { username: searchQuery });
+      return response.data;
+    },
+    // אפשר לעבד את הנתונים כאן או ב-onSuccess
+    onSuccess: (data) => {
+      // console.log("Data received:", data);
+      setSearchResults(data); // עדכון תוצאות החיפוש עם הנתונים מהשרת
+
+      setIsSearching(false); // עדכון מצב החיפוש
+    }
+  });
+
+
+    // עדכון מנהל בDB 
+  const {
+    mutate: UpdateNewManger, // הפונקציה שתפעיל את השאילתה
+    data: SetNewManagerData,
+    isPending: SetNewManagerisLoading, // בגרסאות חדשות זה isPending במקום isLoading
+    error: SetNewManagerError,
+    isError: isSetNewManagerError
+  } = useMutation({
+    mutationFn: async (newAdmin) => {
+      console.log("Sending new manager data to server8888:", newAdmin);
+      // כאן אנחנו שולחים את ה-Body שמתקבל מהקריאה לפונקציה
+      const response = await axios.post(`/Managers/AddAdmins`, { manager: newAdmin });
+      return response.data;
+    },
+    // אפשר לעבד את הנתונים כאן או ב-onSuccess
+    onSuccess: (data) => {
+      console.log("Data received:", data);
+      setSearchResults([]); // עדכון תוצאות החיפוש עם הנתונים מהשרת
+      setAddingAdmin(null);
+queryClient.invalidateQueries({ queryKey: ["get_AllManagersData"] });
+
+      setIsSearching(false); // עדכון מצב החיפוש
+    }
+  });
+
+
+  // --- איך מפעילים את זה? ---
+  // const handleButtonClick = () => {
+  //   // const myBody = { department: "IT", region: "North" };
+  //   fetchManagers(reqBody); // כאן קורה הקסם
+  // };
+
+
+  // אחרי השליפה הוא מעדכן את הרשימת מנהלים 
+  useEffect(() => {
+    if (AllManagersData) {
+      console.log("Fetched users data:", AllManagersData);
+      setAdmins(AllManagersData); // עדכון המנהלים עם הנתונים מהשרת
+    }
+  }, [AllManagersData]);
+
+  // const [filteredResults, setFilteredResults] = useState([]);
+  // useEffect(() => {
+
+  //   if (isSearching.length>0   ) { 
+
+  //     const filtered = isSearching.filter(item => 
+  //        item.telegramuserid[0] === -1
+  //     );
+  //     setFilteredResults(...filtered);
+  // allUsersAndGroups.push(...AllUsersAndGroupsData); // עדכון המנהלים עם הנתונים מהשרת
+  //   }
+  // }, [isSearching]);
+  // useEffect(() => {console.log("filteredResults", filteredResults); }, [filteredResults]);
+
+  // מאפס את החיפוש ברגע שמחקתי את הנתונים
+  useEffect(() => {
+    // console.log("Search query changed:", searchQuery);
+  }, [searchQuery]);
+  useEffect(() => {
+    if (!isSearching && searchQuery.length === 0) {
+      setSearchResults([]);
+    }
+  }, [isSearching, searchQuery]);
+
+
+  // מטפל בחיפוש ומפעיל את הפונקציה
+  const handleSearch = async () => {
+    console.log("Initiating search with query:", searchQuery);
     if (!searchQuery.trim()) return;
-    setIsSearching(true);
-    setTimeout(() => {
-      setSearchResults(MOCK_SEARCH.filter(u => !admins.find(a => a.id === u.id)));
-      setIsSearching(false);
-    }, 800);
+
+    const searchResults = fetchAllUsers(searchQuery);
+    GetAllUsersisLoading ? setIsSearching(true) : setIsSearching(false);
+    setSearchResults(searchResults || []); // עדכון תוצאות החיפוש
+    // setIsSearching(false);
+
   };
 
-  const handleSaveAdmin = (admin) => {
-    setAdmins(prev => [...prev, { ...admin, photo: admin.photo || "" }]);
-    setAddedIds(prev => new Set([...prev, admin.id]));
-    setAddingAdmin(null);
+
+  // שמירת מנהל
+const handleSaveAdmin = (admin) => {
+  const newAdmin = {
+    ...admin,
+    // התאמת שמות השדות שהרשימה מצפה להם
+    ManagerName: admin.NameOfUser,
+    ManagersUserName: admin.TelegramUserName,
+    ManagersRole: admin.role, // התפקיד שנבחר במודל
+    ManagerNick_Name: admin.nickname, // הכינוי שנבחר במודל
+    photo: admin.UserPicture || admin.photo || ""
+  };
+  // console.log("Saving new manager with data:", newAdmin);
+  UpdateNewManger(newAdmin); // שליחת הנתונים לשרת
+  // setAdmins(prev => [...prev, newAdmin]);
+  // setAddedIds(prev => new Set([...prev, admin.TelegramUserId]));
+  // setAddingAdmin(null);
+};
+
+
+  const handleSaveNickname = (nickname) => {
+    setAdmins(prev => prev.map(a => a.TelegramUserId === editingAdmin.TelegramUserId ? { ...a, nickname } : a));
+    setEditingAdmin(null);
   };
 
   const handleRemoveConfirmed = () => {
-    setAdmins(prev => prev.filter(a => a.id !== confirmAdmin.id));
+    setAdmins(prev => prev.filter(a => a.TelegramUserId !== confirmAdmin.TelegramUserId));
     setConfirmAdmin(null);
   };
 
+  // פילטור המנהלים הקיימים
   const filtered = admins.filter(a =>
-    a.name.includes(filterQuery) ||
-    a.username.includes(filterQuery) ||
-    a.id.includes(filterQuery)
+    a.ManagerName?.includes(filterQuery) ||
+    a.ManagersUserName?.includes(filterQuery) ||
+    a.TelegramUserId?.includes(filterQuery)
   );
+  // const filtered = admins.filter(a =>
+  //   a.NameOfUser.includes(filterQuery) ||
+  //   a.TelegramUserName.includes(filterQuery) ||
+  //   a.TelegramUserId.includes(filterQuery)
+  // );
 
   return (
     <div className="relative flex flex-col w-full bg-[#0f0f1a] font-sans" dir="rtl">
@@ -214,30 +398,29 @@ export default function ManagersPage() {
           {!isSearching && searchResults.length > 0 && (
             <div className="flex flex-col gap-2">
               {searchResults.map(user => {
-                const added = addedIds.has(user.id);
+                const added = addedIds.has(user.TelegramUserId);
                 return (
-                  <div key={user.id}
+                  <div key={user.TelegramUserId}
                     className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] rounded-xl px-3 py-2.5">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 bg-indigo-500/20">
-                        {user.photo
-                          ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" />
-                          : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold text-sm">{user.name[0]}</div>
+                        {user.UserPicture
+                          ? <img src={user.UserPicture} alt={user.NameOfUser} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold text-sm">{user?.NameOfUser[0]}</div>
                         }
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-gray-200 font-medium">{user.name}</div>
-                        <div className="text-[11px] text-indigo-300 font-mono">{user.username}</div>
-                        <div className="text-[10px] text-gray-600 font-mono">ID: {user.id}</div>
+                        <div className="text-sm text-gray-200 font-medium">{user.NameOfUser}</div>
+                        <div className="text-[11px] text-indigo-300 font-mono">{user.TelegramUserName}</div>
+                        <div className="text-[10px] text-gray-600 font-mono">ID: {user.TelegramUserId}</div>
                       </div>
                     </div>
                     <button
                       onClick={() => !added && setAddingAdmin(user)}
-                      className={`text-[12px] font-semibold rounded-xl px-3 py-1.5 border transition-all cursor-pointer shrink-0 ${
-                        added
+                      className={`text-[12px] font-semibold rounded-xl px-3 py-1.5 border transition-all cursor-pointer shrink-0 ${added
                           ? "bg-green-500/10 border-green-500/20 text-green-400 cursor-default"
                           : "bg-indigo-500/20 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/30"
-                      }`}>
+                        }`}>
                       {added ? "✓ נוסף" : "+ הוסף"}
                     </button>
                   </div>
@@ -251,6 +434,7 @@ export default function ManagersPage() {
               לא נמצאו משתמשים — נסה username אחר
             </div>
           )}
+          {/* {!isSearching && searchQuery.length === 0 (setSearchResults([]))} */}
         </SectionCard>
 
         {/* ── מנהלים קיימים ── */}
@@ -278,35 +462,48 @@ export default function ManagersPage() {
           )}
 
           {filtered.map(admin => (
-            <div key={admin.id}
+            <div key={admin.TelegramUserId}
               className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 hover:bg-white/[0.06] transition-all">
 
               {/* Photo */}
               <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 bg-indigo-500/20">
                 {admin.photo
-                  ? <img src={admin.photo} alt={admin.name} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold">{admin.name[0]}</div>
+                  ? <img src={admin.photo} alt={admin.ManagerName} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold">{admin.ManagersUserName[0]}{admin.ManagersUserName[1]}{admin.ManagersUserName[2]}</div>
                 }
               </div>
 
               {/* Info */}
               <div className="flex-1 min-w-0 text-right">
-                <div className="flex items-center gap-2 justify-end mb-0.5">
-                  <span className="text-sm text-gray-200 font-semibold truncate">{admin.name}</span>
-                  <RoleBadge roleId={admin.role} />
+                <div className="flex items-center gap-2 mb-0.5" dir="rtl">
+                  {/* השם יופיע ראשון מימין */}
+                  <span className="text-sm text-gray-200 font-semibold truncate">
+                    {admin.ManagerName}
+                  </span>
+
+                  {/* התגית תופיע משמאלו */}
+                  <RoleBadge roleId={admin.ManagersRole} />
                 </div>
-                <div className="text-[12px] text-indigo-300 font-mono">{admin.username}</div>
-                {admin.nickname && (
-                  <div className="text-[11px] text-gray-500 mt-0.5">"{admin.nickname}"</div>
+                <div className="text-[12px] text-indigo-300 font-mono">{admin.ManagersUserName}</div>
+                {admin.ManagerNick_Name && (
+                  <div className="text-[11px] text-gray-500 mt-0.5">"{admin.ManagerNick_Name}"</div>
                 )}
-                <div className="text-[10px] text-gray-600 font-mono mt-0.5">ID: {admin.id}</div>
+                <div className="text-[10px] text-gray-600 font-mono mt-0.5">ID: {admin.TelegramUserId}</div>
               </div>
 
-              {/* Remove */}
-              <button onClick={() => setConfirmAdmin(admin)}
-                className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[13px] cursor-pointer hover:bg-red-500/20 transition-all shrink-0 flex items-center justify-center">
-                🗑
-              </button>
+
+
+              {/* Actions */}
+              <div className="flex flex-col gap-1.5">
+                <button onClick={() => setEditingAdmin(admin)}
+                  className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[13px] cursor-pointer hover:bg-indigo-500/20 transition-all shrink-0 flex items-center justify-center">
+                  ✏️
+                </button>
+                <button onClick={() => setConfirmAdmin(admin)}
+                  className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[13px] cursor-pointer hover:bg-red-500/20 transition-all shrink-0 flex items-center justify-center">
+                  🗑
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -322,10 +519,19 @@ export default function ManagersPage() {
         />
       )}
 
+      {/* Edit Nickname Modal */}
+      {editingAdmin && (
+        <EditNicknameModal
+          admin={editingAdmin}
+          onSave={handleSaveNickname}
+          onClose={() => setEditingAdmin(null)}
+        />
+      )}
+
       {/* Confirm Remove Modal */}
       {confirmAdmin && (
         <ConfirmModal
-          adminName={confirmAdmin.name}
+          adminName={confirmAdmin.ManagerName}
           onConfirm={handleRemoveConfirmed}
           onCancel={() => setConfirmAdmin(null)}
         />

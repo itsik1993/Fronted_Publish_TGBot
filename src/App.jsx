@@ -53,9 +53,9 @@ const test=true;
             })}
           />
               <Route
-            path="ManageGroups"
+            path="GroupsManager"
             lazy={async () => ({
-              Component: (await import('./components/Pages/Privet/Groups/ManageGroups.jsx')).default,
+              Component: (await import('./components/Pages/Privet/Groups/GroupsManagerPage.jsx')).default,
             })}
           />
                    <Route
