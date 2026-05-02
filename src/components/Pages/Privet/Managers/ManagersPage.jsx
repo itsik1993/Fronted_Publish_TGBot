@@ -2,6 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useQueryClient } from "@tanstack/react-query";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import axios from 'axios';
+import { toastSuccess, toastError } from "../../../../../UI/Toast/Toast.jsx";
+
 
 const ROLES = [
   { id: "Admin", label: "Admin", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" },
@@ -82,12 +84,12 @@ function AddAdminModal({ admin, onSave, onClose }) {
         {/* User preview */}
         <div className="flex items-center gap-3 mb-5 bg-white/[0.04] border border-white/[0.06] rounded-2xl px-4 py-3">
           <div className="w-11 h-11 rounded-full overflow-hidden shrink-0">
-            <img src={admin.photo} alt={admin.NameOfUser} className="w-full h-full object-cover" />
+            <img src={admin.photo} alt={admin.nameofuser} className="w-full h-full object-cover" />
           </div>
           <div className="text-right">
-            <div className="text-sm font-semibold text-white">{admin.NameOfUser}</div>
-            <div className="text-[12px] text-indigo-300 font-mono">{admin.TelegramUserName}</div>
-            <div className="text-[11px] text-gray-600 mt-0.5">ID: {admin.TelegramUserId}</div>
+            <div className="text-sm font-semibold text-white">{admin.nameofuser}</div>
+            <div className="text-[12px] text-indigo-300 font-mono">{admin.telegramusername}</div>
+            <div className="text-[11px] text-gray-600 mt-0.5">ID: {admin.telegramuserid}</div>
           </div>
         </div>
 
@@ -129,7 +131,7 @@ function AddAdminModal({ admin, onSave, onClose }) {
 }
 
 function EditNicknameModal({ admin, onSave, onClose }) {
-  const [nickname, setNickname] = useState(admin.ManagerNick_Name || "");
+  const [nickname, setNickname] = useState(admin.managernick_name || "");
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
@@ -140,13 +142,13 @@ function EditNicknameModal({ admin, onSave, onClose }) {
         <div className="flex items-center gap-3 mb-5">
           <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 bg-indigo-500/20">
             {admin.photo
-              ? <img src={admin.photo} alt={admin.ManagerName} className="w-full h-full object-cover" />
-              : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold">{admin.ManagerName[0]}</div>
+              ? <img src={admin.photo} alt={admin.managername} className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold">{admin.managername[0]}</div>
             }
           </div>
           <div className="text-right">
-            <div className="text-sm font-semibold text-white">{admin.ManagerName}</div>
-            <div className="text-[12px] text-indigo-300 font-mono">{admin.ManagersUserName}</div>
+            <div className="text-sm font-semibold text-white">{admin.managername}</div>
+            <div className="text-[12px] text-indigo-300 font-mono">{admin.managersusername}</div>
           </div>
         </div>
 
@@ -176,6 +178,8 @@ function EditNicknameModal({ admin, onSave, onClose }) {
 // שירות ראשי
 export default function ManagersPage() {
   const queryClient = useQueryClient();
+    // ✅ הוסף את זה - שולח את initData של טלגרם בכל בקשה
+ 
   const allUsersAndGroups = [];
   const [admins, setAdmins] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -217,7 +221,8 @@ export default function ManagersPage() {
     mutationFn: async () => {
       // כאן אנחנו שולחים את ה-Body שמתקבל מהקריאה לפונקציה
       const response = await axios.post(`/Managers/SerchAddNewUsersToManager`, { username: searchQuery });
-      return response.data;
+      console.log("Search response from server:התשובה שחיכיתי", response.data.data);
+      return response.data.data;
     },
     // אפשר לעבד את הנתונים כאן או ב-onSuccess
     onSuccess: (data) => {
@@ -240,8 +245,15 @@ export default function ManagersPage() {
     mutationFn: async (newAdmin) => {
       console.log("Sending new manager data to server8888:", newAdmin);
       // כאן אנחנו שולחים את ה-Body שמתקבל מהקריאה לפונקציה
-      const response = await axios.post(`/Managers/AddAdmins`, { manager: newAdmin });
-      return response.data;
+try {
+    const response = await axios.post(`/Managers/AddAdmins`, { manager: newAdmin });
+    return response.data;
+  } catch (error) {
+    // כאן אנחנו מחלצים את הודעת השגיאה המדויקת שהשרת שלך שלח ב-res.status(500).json
+    const serverMessage = error.response?.data?.details || error.message;
+    // זריקת השגיאה הלאה ל-onError
+    throw new Error(serverMessage);
+  }
     },
     // אפשר לעבד את הנתונים כאן או ב-onSuccess
     onSuccess: (data) => {
@@ -249,9 +261,20 @@ export default function ManagersPage() {
       setSearchResults([]); // עדכון תוצאות החיפוש עם הנתונים מהשרת
       setAddingAdmin(null);
 queryClient.invalidateQueries({ queryKey: ["get_AllManagersData"] });
-
       setIsSearching(false); // עדכון מצב החיפוש
-    }
+      toastSuccess("מנהל נוסף בהצלחה")
+    },
+ onError: (error) => {
+  // error.message יכיל עכשיו את ה-"details" שראית ב-Network tab
+  console.error("Mutation failed:", error.message);
+  
+  // הצגת הודעה ידידותית למשתמש ב-Toast
+  if (error.message.includes("duplicate key")) {
+    toastError("המנהל הזה כבר קיים במערכת (ID כפול)");
+  } else {
+    toastError(`שגיאה: ${error.message}`);
+  }
+}
   });
 
 
@@ -295,6 +318,16 @@ queryClient.invalidateQueries({ queryKey: ["get_AllManagersData"] });
   }, [isSearching, searchQuery]);
 
 
+  // רק מתוך טלגרם 
+   useEffect(() => {
+    const initData = window.Telegram?.WebApp?.initData;
+    if (initData) {
+      // זה לא שולח כלום עכשיו. זה רק מגדיר הגדרה.
+// axios מוסיף את ה-header אוטומטית מאחורי הקלעים, אז השרת מקבל:
+      axios.defaults.headers.common['Authorization'] = `twa-auth ${initData}`;
+    }
+  }, []);
+
   // מטפל בחיפוש ומפעיל את הפונקציה
   const handleSearch = async () => {
     console.log("Initiating search with query:", searchQuery);
@@ -313,40 +346,40 @@ const handleSaveAdmin = (admin) => {
   const newAdmin = {
     ...admin,
     // התאמת שמות השדות שהרשימה מצפה להם
-    ManagerName: admin.NameOfUser,
-    ManagersUserName: admin.TelegramUserName,
-    ManagersRole: admin.role, // התפקיד שנבחר במודל
-    ManagerNick_Name: admin.nickname, // הכינוי שנבחר במודל
-    photo: admin.UserPicture || admin.photo || ""
+    managername: admin.nameofuser,
+    managersusername: admin.telegramusername,
+    managersrole: admin.role, // התפקיד שנבחר במודל
+    managernick_name: admin.nickname, // הכינוי שנבחר במודל
+    photo: admin.userpicture || admin.photo || ""
   };
   // console.log("Saving new manager with data:", newAdmin);
   UpdateNewManger(newAdmin); // שליחת הנתונים לשרת
   // setAdmins(prev => [...prev, newAdmin]);
-  // setAddedIds(prev => new Set([...prev, admin.TelegramUserId]));
+  // setAddedIds(prev => new Set([...prev, admin.telegramuserid]));
   // setAddingAdmin(null);
 };
 
 
   const handleSaveNickname = (nickname) => {
-    setAdmins(prev => prev.map(a => a.TelegramUserId === editingAdmin.TelegramUserId ? { ...a, nickname } : a));
+    setAdmins(prev => prev.map(a => a.telegramuserid === editingAdmin.telegramuserid ? { ...a, nickname } : a));
     setEditingAdmin(null);
   };
 
   const handleRemoveConfirmed = () => {
-    setAdmins(prev => prev.filter(a => a.TelegramUserId !== confirmAdmin.TelegramUserId));
+    setAdmins(prev => prev.filter(a => a.telegramuserid !== confirmAdmin.telegramuserid));
     setConfirmAdmin(null);
   };
 
   // פילטור המנהלים הקיימים
   const filtered = admins.filter(a =>
-    a.ManagerName?.includes(filterQuery) ||
-    a.ManagersUserName?.includes(filterQuery) ||
-    a.TelegramUserId?.includes(filterQuery)
+    a.managername?.includes(filterQuery) ||
+    a.managersusername?.includes(filterQuery) ||
+    a.telegramuserid?.includes(filterQuery)
   );
   // const filtered = admins.filter(a =>
-  //   a.NameOfUser.includes(filterQuery) ||
-  //   a.TelegramUserName.includes(filterQuery) ||
-  //   a.TelegramUserId.includes(filterQuery)
+  //   a.nameofuser.includes(filterQuery) ||
+  //   a.telegramusername.includes(filterQuery) ||
+  //   a.telegramuserid.includes(filterQuery)
   // );
 
   return (
@@ -398,21 +431,21 @@ const handleSaveAdmin = (admin) => {
           {!isSearching && searchResults.length > 0 && (
             <div className="flex flex-col gap-2">
               {searchResults.map(user => {
-                const added = addedIds.has(user.TelegramUserId);
+                const added = addedIds.has(user.telegramuserid);
                 return (
-                  <div key={user.TelegramUserId}
+                  <div key={user.telegramuserid}
                     className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] rounded-xl px-3 py-2.5">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 bg-indigo-500/20">
-                        {user.UserPicture
-                          ? <img src={user.UserPicture} alt={user.NameOfUser} className="w-full h-full object-cover" />
-                          : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold text-sm">{user?.NameOfUser[0]}</div>
+                        {user.userpicture
+                          ? <img src={user.userpicture} alt={user.nameofuser} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold text-sm">{user?.nameofuser[0]}</div>
                         }
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-gray-200 font-medium">{user.NameOfUser}</div>
-                        <div className="text-[11px] text-indigo-300 font-mono">{user.TelegramUserName}</div>
-                        <div className="text-[10px] text-gray-600 font-mono">ID: {user.TelegramUserId}</div>
+                        <div className="text-sm text-gray-200 font-medium">{user.nameofuser}</div>
+                        <div className="text-[11px] text-indigo-300 font-mono">{user.telegramusername}</div>
+                        <div className="text-[10px] text-gray-600 font-mono">ID: {user.telegramuserid}</div>
                       </div>
                     </div>
                     <button
@@ -462,14 +495,14 @@ const handleSaveAdmin = (admin) => {
           )}
 
           {filtered.map(admin => (
-            <div key={admin.TelegramUserId}
+            <div key={admin.telegramuserid}
               className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 hover:bg-white/[0.06] transition-all">
 
               {/* Photo */}
               <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 bg-indigo-500/20">
                 {admin.photo
-                  ? <img src={admin.photo} alt={admin.ManagerName} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold">{admin.ManagersUserName[0]}{admin.ManagersUserName[1]}{admin.ManagersUserName[2]}</div>
+                  ? <img src={admin.photo} alt={admin.managername} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold">{admin.managersusername[0]}{admin.managersusername[1]}{admin.managersusername[2]}</div>
                 }
               </div>
 
@@ -478,17 +511,17 @@ const handleSaveAdmin = (admin) => {
                 <div className="flex items-center gap-2 mb-0.5" dir="rtl">
                   {/* השם יופיע ראשון מימין */}
                   <span className="text-sm text-gray-200 font-semibold truncate">
-                    {admin.ManagerName}
+                    {admin.managername}
                   </span>
 
                   {/* התגית תופיע משמאלו */}
-                  <RoleBadge roleId={admin.ManagersRole} />
+                  <RoleBadge roleId={admin.managersrole} />
                 </div>
-                <div className="text-[12px] text-indigo-300 font-mono">{admin.ManagersUserName}</div>
-                {admin.ManagerNick_Name && (
-                  <div className="text-[11px] text-gray-500 mt-0.5">"{admin.ManagerNick_Name}"</div>
+                <div className="text-[12px] text-indigo-300 font-mono">{admin.managersusername}</div>
+                {admin.managernick_name && (
+                  <div className="text-[11px] text-gray-500 mt-0.5">"{admin.managernick_name}"</div>
                 )}
-                <div className="text-[10px] text-gray-600 font-mono mt-0.5">ID: {admin.TelegramUserId}</div>
+                <div className="text-[10px] text-gray-600 font-mono mt-0.5">ID: {admin.telegramuserid}</div>
               </div>
 
 
@@ -506,6 +539,8 @@ const handleSaveAdmin = (admin) => {
               </div>
             </div>
           ))}
+                 <div className="h-20 w-full flex-shrink-0" aria-hidden="true">
+</div>
         </div>
 
       </div>
@@ -531,7 +566,7 @@ const handleSaveAdmin = (admin) => {
       {/* Confirm Remove Modal */}
       {confirmAdmin && (
         <ConfirmModal
-          adminName={confirmAdmin.ManagerName}
+          adminName={confirmAdmin.managername}
           onConfirm={handleRemoveConfirmed}
           onCancel={() => setConfirmAdmin(null)}
         />

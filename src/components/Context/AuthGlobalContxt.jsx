@@ -13,26 +13,29 @@ function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true); // מתחיל בטעינה
 
 
-
+useEffect 
 
 
 
 // global functions
   async function getAuth() {
+  
+
   const telegramUser = window.Telegram.WebApp.initData;
 if (telegramUser) {
 
+
     try {
-       const {data} = await axios.get("/Users/auth",{
+       const {data} = await axios.get("/Managers/auth",{
         headers: {
           // אנחנו שולחים את כל המחרוזת תחת ה-Header Authorization
           'Authorization': `twa-auth ${telegramUser}`
         }
       })
-       console.log(data , "this is the data of cccccccccccccccccccccccccccccccccccccccccc")
+       console.log(data.data , "this is the data of cccccccccccccccccccccccccccccccccccccccccc")
        if(data){
         setIsAuth(true)
-        setUser(data.User)
+        setUser(data.data)
         setIsLoading(false)
        }
        else {     
@@ -58,7 +61,9 @@ else {
   }
 
 
-
+  useEffect(() => {
+    console.log(User, "this is the user")
+  },[User]);
 
 
   useEffect(() => {

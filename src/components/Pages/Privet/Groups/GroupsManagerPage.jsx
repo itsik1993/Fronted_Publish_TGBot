@@ -19,7 +19,7 @@ function SectionCard({ icon, title, children }) {
 
 // מודל
 
-function ConfirmModal({ groupName, onConfirm, onCancel }) {
+function ConfirmModal({ groupname, onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6" onClick={onCancel}>
       <div className="w-full max-w-[340px] bg-[#1a1a2e] border border-white/10 rounded-2xl p-5"
@@ -28,7 +28,7 @@ function ConfirmModal({ groupName, onConfirm, onCancel }) {
           <div className="text-3xl mb-2">🗑️</div>
           <div className="text-base font-bold text-white mb-1">הסרת קבוצה</div>
           <div className="text-sm text-gray-400">
-            האם להסיר את <span className="text-white font-semibold">"{groupName}"</span> מהרשימה?
+            האם להסיר את <span className="text-white font-semibold">"{groupname}"</span> מהרשימה?
           </div>
         </div>
         <div className="flex gap-2">
@@ -58,12 +58,12 @@ function AddGroupModal({ Group, onSave, onClose }) {
       {/* Group preview */}
       <div className="flex items-center gap-3 mb-5 bg-white/[0.04] border border-white/[0.06] rounded-2xl px-4 py-3">
         <div className="w-11 h-11 rounded-full overflow-hidden shrink-0">
-          <img src={Group.photo} alt={Group.GroupUserName} className="w-full h-full object-cover" />
+          <img src={Group.photo} alt={Group.groupusername} className="w-full h-full object-cover" />
         </div>
         <div className="text-right">
-          <div className="text-sm font-semibold text-white">{Group.GroupName}</div>
-          <div className="text-[12px] text-indigo-300 font-mono">{Group.GroupUserName}</div>
-          <div className="text-[11px] text-gray-600 mt-0.5">ID: {Group.TelegramGroupId}</div>
+          <div className="text-sm font-semibold text-white">{Group.groupname}</div>
+          <div className="text-[12px] text-indigo-300 font-mono">{Group.groupusername}</div>
+          <div className="text-[11px] text-gray-600 mt-0.5">ID: {Group.telegramgroupid}</div>
         </div>
       </div>
 
@@ -87,7 +87,7 @@ export default function ManageGroups() {
   const [groups, setGroups] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
+  // const [isSearching, setIsSearching] = useState(false);
   const [addedIds, setAddedIds] = useState(new Set());
   const [confirmGroup, setConfirmGroup] = useState(null);
   const [filterQuery, setFilterQuery] = useState("");
@@ -95,7 +95,7 @@ export default function ManageGroups() {
   // שליפות
 
 
-  // שליפת הקבוצות הקיימות מהשרת
+  //שכבר מנוהלות שליפת הקבוצות הקיימות מהשרת
   const {
     data: AllExistGroupsData,
     isLoading: AllExistGroupsisLoading,
@@ -105,35 +105,39 @@ export default function ManageGroups() {
     queryKey: ["get_AllExistGroupsData"],
     queryFn: async () => {
       const response = await axios.get(`/GroupList/AllExistGroupsList`);
+      
       return response.data;
     },
     select: (data) => data?.data || data, // טיפול גמיש בנתונים
     staleTime: 1000 * 60,
   });
+  
 
 
 
-  // שליפה לפי צורך חיפוש
-  const {
-    mutate: fetchAllGroups, // הפונקציה שתפעיל את השאילתה
-    data: GetAllGroupsData,
-    isPending: GetAllGroupsisLoading, // בגרסאות חדשות זה isPending במקום isLoading
-    error: GetAllGroupsError,
-    isError: isGetAllGroupsError
-  } = useMutation({
-    mutationFn: async () => {
-      // כאן אנחנו שולחים את ה-Body שמתקבל מהקריאה לפונקציה
-      const response = await axios.post(`/GroupList/SerchAddNewGroupToManager`, { groupname: searchQuery });
-      return response.data;
-    },
-    // אפשר לעבד את הנתונים כאן או ב-onSuccess
-    onSuccess: (data) => {
-      // console.log("Data received:", data);
-      setSearchResults(data); // עדכון תוצאות החיפוש עם הנתונים מהשרת
-
-      setIsSearching(false); // עדכון מצב החיפוש
-    }
-  });
+  
+// מחפש קבוצה לפי שם או מזהה ומעדכן את תוצאות החיפוש
+  const { 
+  mutate: fetchAllGroups, 
+  isPending: isSearching // שימוש בסטייט המובנה של React Query
+} = useMutation({
+  mutationFn: async () => {
+    const response = await axios.post(`/GroupList/SerchAddNewGroupToManager`, { 
+        groupname: searchQuery 
+    });
+    return response.data;
+  },
+  onSuccess: (data) => {
+    // וודא שאתה לוקח את המערך הנכון (לפעמים זה בתוך data.data)
+    setSearchResults(data?.data || data || []); 
+    console.log("Search results updated:", data);
+  },
+  onError: (error) => {
+    console.error("Search error:", error);
+    // toastError("חלה שגיאה בחיפוש");
+    setSearchResults([]);
+  }
+});
 
 
   // עדכון קבוצה בDB 
@@ -144,10 +148,12 @@ export default function ManageGroups() {
     error: SetNewGroupError,
     isError: isSetNewGroupError
   } = useMutation({
+    
     mutationFn: async (newGroup) => {
       console.log("Sending new group data to server8888:", newGroup);
       // כאן אנחנו שולחים את ה-Body שמתקבל מהקריאה לפונקציה
       const response = await axios.post(`/GroupList/AddNewGroup`, { group: newGroup });
+      console.log("2. תשובה מהשרת:", response.status);
       return response.data;
     },
     // אפשר לעבד את הנתונים כאן או ב-onSuccess
@@ -159,11 +165,11 @@ export default function ManageGroups() {
       toastSuccess("הקבוצה נוספה בהצלחה!");
       queryClient.invalidateQueries({ queryKey: ["get_AllExistGroupsData"] });
 
-      setIsSearching(false); // עדכון מצב החיפוש
+      // setIsSearching(false); // עדכון מצב החיפוש
     },
     onError: (error) => {
       console.error("Error adding group6666:", error.response);
-      toastError(error.response?.data?.details);
+      toastError(error.response?.data?.error || "חלה שגיאה בהוספת הקבוצה");
        setSearchResults([]); 
       setAddingGroup(null)
     }
@@ -181,9 +187,9 @@ export default function ManageGroups() {
 
 
   // מאפס את החיפוש ברגע שמחקתי את הנתונים
-  useEffect(() => {
-    // console.log("Search query changed:", searchQuery);
-  }, [searchQuery]);
+  // useEffect(() => {
+  //   // console.log("Search query changed:", searchQuery);
+  // }, [searchQuery]);
   useEffect(() => {
     if (!isSearching && searchQuery.length === 0) {
       setSearchResults([]);
@@ -194,16 +200,23 @@ export default function ManageGroups() {
 
 
   // מטפל בחיפוש ומפעיל את הפונקציה
-  const handleSearch = async () => {
-    console.log("Initiating search with query:", searchQuery);
-    if (!searchQuery.trim()) return;
+  // const handleSearch = async () => {
+  //   console.log("Initiating search with query:", searchQuery);
+  //   if (!searchQuery.trim()) return;
 
-    const searchResults = fetchAllGroups(searchQuery);
-    GetAllGroupsisLoading ? setIsSearching(true) : setIsSearching(false);
-    setSearchResults(searchResults || []); // עדכון תוצאות החיפוש
-    // setIsSearching(false);
+  //   const searchResults = fetchAllGroups(searchQuery);
+  //   GetAllGroupsisLoading ? setIsSearching(true) : setIsSearching(false);
+  //   setSearchResults(searchResults || []); // עדכון תוצאות החיפוש
+  //   // setIsSearching(false);
 
-  };
+  // };
+const handleSearch = () => {
+  if (!searchQuery.trim()) return;
+  
+  // פשוט מפעילים את המוטציה. 
+  // ה-isPending יהפוך ל-true אוטומטית ויחזור ל-false בסיום.
+  fetchAllGroups(); 
+};
 
   const handelAddGroup = (group) => {
 
@@ -217,11 +230,22 @@ export default function ManageGroups() {
     setConfirmGroup(null);
   };
 
-  const filtered = groups.filter(g =>
-    (g.GroupName?.includes(filterQuery)) ||
-    (g.GroupUserName?.includes(filterQuery)) ||
-    (g.TelegramGroupId?.toString().includes(filterQuery))
+  // const filtered = groups.filter(g =>
+    
+  //   (g.groupname?.includes(filterQuery)) ||
+  //   (g.groupusername?.includes(filterQuery)) ||
+  //   (g.telegramgroupid?.toString().includes(filterQuery))
+  // );
+  const filtered = groups.filter(g => {
+  // הופכים את שאילתת הסינון לאותיות קטנות פעם אחת מראש
+  const lowQuery = filterQuery.toLowerCase();
+
+  return (
+    (g.groupname?.toLowerCase().includes(lowQuery)) ||
+    (g.groupusername?.toLowerCase().includes(lowQuery)) ||
+    (g.telegramgroupid?.toString().includes(lowQuery))
   );
+});
 
   // useEffect(() => {
 
@@ -286,18 +310,18 @@ export default function ManageGroups() {
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 bg-indigo-500/20">
                         {group.photo
-                          ? <img src={group.photo} alt={group.GroupName} className="w-full h-full object-cover" />
+                          ? <img src={group.photo} alt={group.groupname} className="w-full h-full object-cover" />
                           : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold">
-                            {group.GroupName?.slice(0, 3)}
+                            {group.groupname?.slice(0, 3)}
                           </div>
                         }
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-gray-200 font-medium">{group.GroupName}</div>
+                        <div className="text-sm text-gray-200 font-medium">{group.groupname}</div>
                         <div className="text-[12px] text-indigo-300/80 font-medium truncate">
-                          {group.GroupUserName}
+                          {group.groupusername}
                         </div>
-                        <div className="text-[11px] text-gray-600 mt-0.5 font-mono">{group.TelegramGroupId}</div>
+                        <div className="text-[11px] text-gray-600 mt-0.5 font-mono">{group.telegramgroupid}</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -373,9 +397,9 @@ export default function ManageGroups() {
               {/* Photo */}
               <div className="relative w-11 h-11 rounded-full overflow-hidden shrink-0 bg-indigo-500/20 ml-3">
                 {group.photo
-                  ? <img src={group.photo} alt={group.GroupUserName} className="w-full h-full object-cover" />
+                  ? <img src={group.photo} alt={group.groupusername} className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center text-indigo-300 font-bold">
-                    {group.GroupName?.slice(0, 3)}
+                    {group.groupname?.slice(0, 3)}
                   </div>
                 }
                 <span className={`absolute bottom-0 left-0 w-3 h-3 rounded-full border-2 border-[#0f0f1a] ${group.active ? "bg-green-400" : "bg-gray-600"}`} />
@@ -385,20 +409,20 @@ export default function ManageGroups() {
               <div className="text-right flex-1 min-w-0">
                 {/* 1. שם הקבוצה - בולט ולבן */}
                 <div className="text-sm text-gray-100 font-bold truncate mb-0.5">
-                  {group.GroupName}
+                  {group.groupname}
                 </div>
 
                 {/* 2. שורת מידע משנית - שם משתמש ו-ID */}
                 <div className="flex flex-col gap-0.5">
                   {/* שם המשתמש (למשל @aajmc.bot) */}
                   <div className="text-[12px] text-indigo-300/80 font-medium truncate">
-                    {group.GroupUserName}
+                    {group.groupusername}
                   </div>
 
                   {/* ה-ID וכמות החברים בשורה אחת תחתונה */}
                   <div className="flex items-center gap-2 justify-end mt-0.5">
                     <span className="text-[10px] text-gray-600 font-mono truncate">
-                      {group.TelegramGroupId}
+                      {group.telegramgroupid}
                     </span>
                     <span className="text-[10px] text-gray-500 shrink-0">
                       • {group.members?.toLocaleString() || 0} חברים
@@ -416,13 +440,15 @@ export default function ManageGroups() {
             </div>
           ))}
         </div>
+               <div className="h-20 w-full flex-shrink-0" aria-hidden="true">
+</div>
 
       </div>
 
       {/* Confirm modal */}
       {confirmGroup && (
         <ConfirmModal
-          groupName={confirmGroup.GroupName}
+          groupname={confirmGroup.groupname}
           onConfirm={handleRemoveConfirmed}
           onCancel={() => setConfirmGroup(null)}
         />

@@ -1,12 +1,13 @@
 
-import { useState } from "react";
-import {
- 
-  useNavigate
-} from 'react-router-dom'
+// import { useState } from "react";
+import { useState ,useEffect ,useContext } from 'react'
+
+import {useNavigate} from 'react-router-dom'
 // import Nav from "../../../../UI/Nav.jsx";
+import { AuthContext } from '../../../Context/AuthGlobalContxt.jsx'
 
 export default function App() {
+   const{ User } = useContext(AuthContext)
   const navigate = useNavigate();
   const [toast, setToast] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
@@ -45,8 +46,11 @@ export default function App() {
           👑
         </div>
         <div className="flex-1 text-right">
-          <div className="text-sm font-semibold text-gray-100">הבוס הגדול</div>
-          <div className="text-[11px] text-gray-500 mt-0.5">מנהל מערכת · פרימיום</div>
+          <div className="text-sm font-semibold text-gray-100"> {User?.managernick_name}</div>
+          <div className="text-[11px] text-gray-500 mt-0.5">
+           {User?.managersrole==="Admin"? ` מנהל מערכת · פרימיום`:`משתמש צפייה` }
+            {/* מנהל מערכת · פרימיום */}
+            </div>
         </div>
         <span className="text-xl">🔥</span>
       </div>

@@ -16,7 +16,8 @@ import {
     { icon: "⚙️", label: "הגדרות", navigateTo: "/Settings" },
   ];
        return (
-      <div className="sticky bottom-0 z-10 flex justify-around bg-[rgba(15,15,26,0.95)] backdrop-blur-xl border-t border-white/[0.08] py-1 mt-auto">
+      // <div className="sticky bottom-0 z-10 flex justify-around bg-[rgba(15,15,26,0.95)] backdrop-blur-xl border-t border-white/[0.08] py-1 mt-auto">
+<div className="fixed bottom-0 left-0 right-0 z-50 flex justify-around bg-[rgba(15,15,26,0.95)] backdrop-blur-xl border-t border-white/[0.08] py-1 ">
   {navItems.map((n, i) => (
     <button
       key={i}

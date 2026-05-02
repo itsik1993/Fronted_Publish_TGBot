@@ -18,7 +18,7 @@ function TextToolbar({ textareaRef, value, onChange }) {
   const tools = [
     { label: "B",   title: "הדגשה",    style: "font-bold",             action: () => applyFormat("**", "**") },
     { label: "I",   title: "נטוי",     style: "italic",                action: () => applyFormat("_", "_") },
-    { label: "U",   title: "קו תחתון", style: "underline",             action: () => applyFormat("__", "__") },
+    { label: "U",   title: "קו תחתון", style: "underline",             action: () => applyFormat("<u>", "</u>") },
     { label: "S",   title: "קו חוצה",  style: "line-through",          action: () => applyFormat("~~", "~~") },
     { label: "</>", title: "קוד",      style: "font-mono text-[11px]", action: () => applyFormat("`", "`") },
     { label: "❝",  title: "ציטוט",    style: "",                      action: () => applyFormat("||", "||") },
@@ -70,8 +70,8 @@ export default function ContentSection({ form, setForm }) {
             <input
               type="text"
               placeholder="לדוגמה: מבצע סוף שבוע"
-              value={form.MessagesName}
-              onChange={e => setForm({ ...form, MessagesName: e.target.value })}
+              value={form.messagesname}
+              onChange={e => setForm({ ...form, messagesname: e.target.value })}
               className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors"
             />
           </div>
@@ -80,14 +80,14 @@ export default function ContentSection({ form, setForm }) {
             <div className="text-[11px] text-gray-500 mb-1.5">טקסט המודעה</div>
             <TextToolbar
               textareaRef={textareaRef}
-              value={form.Messages_Text}
-              onChange={v => setForm({ ...form, Messages_Text: v })}
+              value={form.messages_text}
+              onChange={v => setForm({ ...form, messages_text: v })}
             />
             <textarea
               ref={textareaRef}
               placeholder="כתוב את תוכן ההודעה שתפורסם..."
-              value={form.Messages_Text}
-              onChange={e => setForm({ ...form, Messages_Text: e.target.value })}
+              value={form.messages_text}
+              onChange={e => setForm({ ...form, messages_text: e.target.value })}
               rows={4}
               className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors resize-none font-mono"
             />

@@ -1,4 +1,6 @@
 import { useState ,useEffect} from "react";
+import {useNavigate} from 'react-router-dom'
+import { toastSuccess, toastError } from "../../../../../UI/Toast/Toast.jsx";
 import ContentSection from "./ContentSection.jsx";
 import LinksSection from "./Linkssection.jsx";
 import MediaSection from "./Mediasection.jsx";
@@ -8,19 +10,23 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import axios from 'axios';
 
+
 export default function CreateAd() {
+   const queryClient = useQueryClient();
+         
+   const navigate = useNavigate();
   const [form, setForm] = useState({
-    MessagesName: "",
-    Messages_Text: "",
-    Messages_Links: [[{ name: "", url: "" }]],
-    Messages_Media: null,
-    DateStart: "", FirstTimeStart: "",
-    DateEnd: "", EndTime: "",
-    Repetition: "",
-    IsActive: true,
-    Pin_message: false,
-    DeleteLaste: false,
-    GroupIds: [],
+    messagesname: "",
+    messages_text: "",
+    messages_links: [[{ name: "", url: "" }]],
+    messages_media: null,
+    datestart: "", firsttimestart: "",
+    dateend: "", endtime: "",
+    repetition: "",
+    isactive: true,
+    pin_message: false,
+    deletelaste: false,
+    groupids: [],
   });
 
 
@@ -29,25 +35,40 @@ export default function CreateAd() {
   }, [form]);
 
 
-  // שליפת הקבוצות הקיימות מהשרת
+  
+    // עדכון מנהל בDB 
   const {
-    data: AllExistGroupsData,
-    isLoading: AllExistGroupsisLoading,
-    error: AllExistGroupsError,
-    isError: isAllExistGroupsError
-  } = useQuery({
-    queryKey: ["get_AllExistGroupsData"],
-    queryFn: async () => {
-      const response = await axios.get(`/GroupList/AllExistGroupsList`);
+    mutate: CreatePost, // הפונקציה שתפעיל את השאילתה
+    data: SetCreatePostData,
+    isPending: SetCreatePostisLoading, // בגרסאות חדשות זה isPending במקום isLoading
+    error: SetCreatePostError,
+    isError: isSetCreatePostError
+  } = useMutation({
+    mutationFn: async ( form) => {
+      console.log("create post:", form);
+      // כאן אנחנו שולחים את ה-Body שמתקבל מהקריאה לפונקציה
+      const response = await axios.post(`/Messages/CreatNewMessage`, form);
       return response.data;
     },
-    select: (data) => data?.data || data, // טיפול גמיש בנתונים
-    staleTime: 1000 * 60,
+    // אפשר לעבד את הנתונים כאן או ב-onSuccess
+    onSuccess: (data) => {
+      console.log("Data received:", data);
+      toastSuccess("מודעה נוצרה בהצלחה!");
+      navigate('/AllPosts'); // נווט חזרה לדף הבית לאחר יצירת המודעה
+       queryClient.invalidateQueries({ queryKey: ["get_AllPostsData"] });
+
+    },
+    onError: (error) => {
+      console.error("Error creating post:", error);
+      toastError("שגיאה ביצירת המודעה. אנא נסה שוב.");
+    }
   });
 
 const handelSubmit = () => {
   // כאן תוכל להוסיף את הלוגיקה לשמירת המודעה, למשל קריאה ל-API
   console.log("Submitting form data:", form);
+CreatePost(form);
+
 }
 
 
@@ -72,13 +93,17 @@ const handelSubmit = () => {
         <LinksSection form={form} setForm={setForm} />
         <MediaSection form={form} setForm={setForm} />
         <TimingSection form={form} setForm={setForm} />
-        <GroupsSection form={form} setForm={setForm} AllExistGroupsData={AllExistGroupsData} />
+        {/* <GroupsSection form={form} setForm={setForm} AllExistGroupsData={AllExistGroupsData} /> */}
+        <GroupsSection form={form} setForm={setForm} />
 
         <button className="w-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-semibold text-[15px] rounded-2xl py-4 border-none cursor-pointer shadow-[0_4px_20px_rgba(99,102,241,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(99,102,241,0.5)] active:scale-[0.98] mt-1"
         onClick={handelSubmit}>
           ✅ שמור מודעה
         </button>
+        <div className="h-20 w-full flex-shrink-0" aria-hidden="true">
+</div>
       </div>
+      
 
     </div>
   );

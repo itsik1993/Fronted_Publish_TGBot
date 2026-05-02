@@ -25,6 +25,19 @@ function MediaModal({ selected, onSelect, onClose }) {
   const [filter, setFilter] = useState("all");
   const [localSel, setLocalSel] = useState(selected);
   const fileRef = useRef(null);
+  //   const image = [
+  //   "jpeg",
+  //   "jpg",
+  //   "png",
+  //   "avif", 
+  //   "webp",
+  // ];
+  // const video = [
+  //   "mp4",
+  //   "mpeg",
+  //   "quicktime" // תמיכה ב-MOV
+  // ];
+
 
   const filtered = filter === "all" 
   ? library 
@@ -41,22 +54,40 @@ function MediaModal({ selected, onSelect, onClose }) {
     queryKey: ["get_AllMediaData"],
     queryFn: async () => {
       const response = await axios.get(`/Gallery/ShowAllMedia`);
-      return response.data;
+      console.log("Raw media data from server:", response.data.media);
+      return response.data.media;
+
     },
     select: (data) => data?.files || data, // טיפול גמיש בנתונים
     staleTime: 1000 * 60,
   });
 
   useEffect(() => {
-    if (AllMediaData) {
-      const filteredData = AllMediaData.filter(item => item.name !== ".emptyFolderPlaceholder");
-      setLibrary(filteredData);
+    if (AllMediaData?.length > 0 ) {
+      const filteredData = AllMediaData?.filter(item => item.name !== ".emptyFolderPlaceholder");
+     const libraryWithTypes = filteredData.map(m => ({
+  ...m,
+  type: getFileType(m.key) // מוסיף שדה type באופן וירטואלי
+}));
+
+setLibrary(libraryWithTypes);
     }
     console.log("AllMediaData:", library);
   }, [AllMediaData]);
 
+
+  const getFileType = (key) => {
+  if (!key) return "";
+  const ext = key.split('.').pop().toLowerCase();
+  const imageExts = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif'];
+  const videoExts = ['mp4', 'webm', 'mov', 'mpeg'];
+
+  if (imageExts.includes(ext)) return 'image';
+  if (videoExts.includes(ext)) return 'video';
+  return '';
+};
   // useEffect(() => { 
-  //   setForm(prev => ({ ...prev, Messages_Media: localSel }));
+  //   setForm(prev => ({ ...prev, messages_media: localSel }));
   // }, [localSel]);
 
 
@@ -69,10 +100,10 @@ function MediaModal({ selected, onSelect, onClose }) {
     isError: isUploadNweMediaError
   } = useMutation({
     mutationFn: async (formData) => {
-      console.log("Sending new media file to server:", formData);
+      console.log("Sending new media file to server:", formData.get('media'));
       // כאן אנחנו שולחים את ה-Body שמתקבל מהקריאה לפונקציה
       const response = await axios.post(`/Gallery/UploadNewMedia`, formData);
-      return response.data;
+      return response.data.media;
     },
     // אפשר לעבד את הנתונים כאן או ב-onSuccess
     onSuccess: (data) => {
@@ -98,8 +129,8 @@ function MediaModal({ selected, onSelect, onClose }) {
 
     // 2. הוספת הקובץ. 
     // שים לב: השם 'file' כאן חייב להתאים למה שכתוב בשרת ב-upload.single('file')
-    formData.append('file', file);
-    console.log("File inside FormData:", formData.get('file'));
+    formData.append('media', file);
+    console.log("File inside FormData:", formData.get('media'));
     UploadNweMedia(formData);
 
     // const newItem = {
@@ -150,7 +181,7 @@ function MediaModal({ selected, onSelect, onClose }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", paddingBottom: "4px" }}>
               {filtered.map((item, index) => (
                 <div
-                  key={`${item.id}-${index}`}
+                  key={`${item.key}-${index}`}
                   onClick={() => setLocalSel(item)}
                   style={{
                     position: "relative",
@@ -163,7 +194,7 @@ function MediaModal({ selected, onSelect, onClose }) {
                 >
                   {/* paddingBottom=75% = יחס 4:3 קבוע ללא קשר לרוחב */}
                   <div style={{ position: "relative", paddingBottom: "75%", background: "#111" }}>
-                    {item.type.includes("video") ?
+                    {item.type === "video" ?
                       <video
                         src={item.url + "#t=0.1"} // ה-#t=0.1 אומר לדפדפן לטעון את הפריים בשנייה ה-0.1
                         style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
@@ -171,7 +202,7 @@ function MediaModal({ selected, onSelect, onClose }) {
 
                       : (<img
                         src={item.url}
-                        alt={item.name}
+                        alt={item.key}
                         style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
                       />)}
                   {item.type === "video" && (
@@ -179,7 +210,7 @@ function MediaModal({ selected, onSelect, onClose }) {
                         <span style={{ color: "white", fontSize: "20px" }}>▶</span>
                       </div>
                     )}
-                    {localSel?.id === item.id && (
+                    {localSel?.key === item.key && (
                       <div style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, background: "#6366f1", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <span style={{ color: "white", fontSize: "10px", fontWeight: "bold" }}>✓</span>
                       </div>
@@ -195,7 +226,7 @@ function MediaModal({ selected, onSelect, onClose }) {
 
           <button onClick={() => { onSelect(localSel); onClose(); }}
             className="mt-4 w-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-semibold text-[15px] rounded-2xl py-3.5 border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98] shrink-0">
-            {localSel ? `בחר — ${localSel.name}` : "בחר קובץ"}
+            {localSel ? `בחר — ${localSel.key.split('/').pop()}` : "בחר קובץ"}
           </button>
         </div>
       </div>
@@ -208,30 +239,30 @@ export default function MediaSection({ form, setForm }) {
   return (
     <>
       <SectionCard icon="🖼️" title="מדיה">
-        {form.Messages_Media ? (
+        {form.messages_media ? (
           <div className="flex items-center gap-3">
             <div className="relative w-20 h-16 rounded-xl overflow-hidden shrink-0">
-              {form.Messages_Media.type.includes("video") ? (
-                <video src={form.Messages_Media.url + "#t=0.1"} className="w-full h-full object-cover" />
+              {form.messages_media.type.includes("video") ? (
+                <video src={form.messages_media.url + "#t=0.1"} className="w-full h-full object-cover" />
               ) : ( 
-              <img src={form.Messages_Media.url} alt={form.Messages_Media.name} className="w-full h-full object-cover" />
+              <img src={form.messages_media.url} alt={form.messages_media.key} className="w-full h-full object-cover" />
               )}
-              {/* {form.Messages_Media.type === "video" && (
+              {/* {form.messages_media.type === "video" && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                   <span className="text-white text-lg">▶</span>
                 </div>
               )} */}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm text-gray-200 font-medium truncate">{form.Messages_Media.name}</div>
-              <div className="text-[11px] text-gray-500 mt-0.5">{form.Messages_Media.type.includes("video") ? "סרטון" : "תמונה"}</div>
+              <div className="text-sm text-gray-200 font-medium truncate">{form.messages_media.key.split('/').pop()}</div>
+              <div className="text-[11px] text-gray-500 mt-0.5">{form.messages_media.type.includes("video") ? "סרטון" : "תמונה"}</div>
             </div>
             <div className="flex flex-col gap-1.5">
               <button onClick={() => setMediaOpen(true)}
                 className="text-[11px] text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-2.5 py-1 cursor-pointer hover:bg-indigo-500/20 transition-all">
                 החלף
               </button>
-              <button onClick={() => setForm({ ...form, Messages_Media: null })}
+              <button onClick={() => setForm({ ...form, messages_media: null })}
                 className="text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-2.5 py-1 cursor-pointer hover:bg-red-500/20 transition-all">
                 הסר
               </button>
@@ -250,7 +281,7 @@ export default function MediaSection({ form, setForm }) {
       {mediaOpen && (
         <MediaModal
           selected={form.media}
-          onSelect={m => setForm({ ...form, Messages_Media: m })}
+          onSelect={m => setForm({ ...form, messages_media: m })}
           onClose={() => setMediaOpen(false)}
         />
       )}
