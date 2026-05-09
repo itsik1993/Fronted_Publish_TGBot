@@ -5,6 +5,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'; // בשביל לינקים ותמיכה מורחבת
 import remarkBreaks from 'remark-breaks'; // בשביל ירידות שורה (Enter)
 import rehypeRaw from 'rehype-raw';
+import { toastSuccess, toastError } from "../../../../../UI/Toast/Toast.jsx";
+
+
+
 
 function Toggle({ checked, onChange }) {
   return (
@@ -91,11 +95,11 @@ function PreviewModal({ ad, onClose }) {
           </div>
         </div>
         {/* {linksection} */}
-        {ad.messages_links.some(row => row.some(l => l.name)) && (
+        {ad.messages_links.some(row => row.some(l => l.text)) && (
           <div className="mt-3 pt-3 border-t border-white/[0.06]">
             {ad.messages_links.map((row, ri) => (
               <div key={ri} className="flex gap-1.5 mb-1.5">
-                {row.map((link, li) => link.name && (
+                {row.map((link, li) => link.text && (
                   <a
                     key={li}
                     href={link.url} // הכתובת שאליה הלינק מוביל
@@ -103,7 +107,7 @@ function PreviewModal({ ad, onClose }) {
                     rel="noopener noreferrer" // אבטחה בסיסית
                     className="flex-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[12px] font-medium rounded-xl px-3 py-1.5 text-center transition-all hover:bg-indigo-500/20 active:scale-95 no-underline block"
                   >
-                    {link.name}
+                    {link.text}
                   </a>
                 ))}
               </div>
@@ -219,6 +223,8 @@ const getFileType = (key) => {
   if (videoExts.includes(ext)) return "video";
   return "";
 };
+
+
 
 export default function AllPostManager() {
   const [ads, setAds] = useState([]);
@@ -374,7 +380,9 @@ export default function AllPostManager() {
           <div className="flex items-center justify-center w-full mt-5">
             <button
               onClick={() => {
-                console.log("אני רוצה לפרסם בקבוצות" , selectedGroups)
+                handelSendOneMessage(selectedGroups, ad);
+                {onClose()}
+                // console.log("אני רוצה לפרסם בקבוצות" , selectedGroups)
               }}
               className="w-40 h-10 rounded-lg bg-blue-600 border-red-500/20 text-white text-[15px] font-bold  cursor-pointer hover:bg-blue-950 transition-all flex items-center justify-center">
               פרסום עכשיו
@@ -386,19 +394,45 @@ export default function AllPostManager() {
     );
   }
 
-
-  const handelSendOneMessage = async (selectedGroups = -1000, ad) => {
-
-    const response = await axios('/Messages/SendSingelMessage', {
+const handelSendOneMessage = async (selectedGroups, ad) => {
+  try {
+    const response = await axios({
+      url: '/Messages/SendSingelMessage',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messeageId: " ",
+      // ב-axios משתמשים ב-data במקום body, ואין צורך ב-JSON.stringify
+      data: {
+        
+        messeageId: ad.id,
         groupIds: selectedGroups,
-        adData: { title: "מבצע חדש", image: "...", links: [] }
-      })
+        adData: { 
+          messages_text: ad.messages_text, 
+          messages_media: ad.messages_media, 
+          messages_links: ad.messages_links,
+          // deletelaste: ad.deletelaste,
+          // last_ad_messageid: ad.last_ad_messageid,
+          pin_message: ad.pin_message
+        }
+      }
     });
-  };
+    
+    console.log("Response from sending message:", response.data.summary); 
+   
+    // פה יכול להיות יותר מתשובה אחת - כי אני שולח למספר קבוצות , אני צריך לואה שתבדוק איפה זה נשלח ואיפה נכשל
+    // if (response.data === "success") {
+    //   console.log("Message sent successfully:", response.data);
+    //   toastSuccess("ההודעה נשלחה בהצלחה!");
+    // } 
+    // else {
+    //   console.error("Failed to send message:", response.data);
+    //   toastError("שליחת ההודעה נכשלה. נסה שוב."); 
+    // } 
+  } 
+  catch (error) {
+    console.error("Error sending message:", error);
+    toastError("אירעה שגיאה בשליחת ההודעה. נסה שוב.");
+  }
+};
 
 
 

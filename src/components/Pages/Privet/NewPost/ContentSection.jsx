@@ -16,12 +16,12 @@ function TextToolbar({ textareaRef, value, onChange }) {
   };
 
   const tools = [
-    { label: "B",   title: "הדגשה",    style: "font-bold",             action: () => applyFormat("**", "**") },
-    { label: "I",   title: "נטוי",     style: "italic",                action: () => applyFormat("_", "_") },
+    { label: "B",   title: "הדגשה",    style: "font-bold",             action: () => applyFormat("<b>", "</b>") },
+    { label: "I",   title: "נטוי",     style: "italic",                action: () => applyFormat("<i>", "</i>") },
     { label: "U",   title: "קו תחתון", style: "underline",             action: () => applyFormat("<u>", "</u>") },
-    { label: "S",   title: "קו חוצה",  style: "line-through",          action: () => applyFormat("~~", "~~") },
-    { label: "</>", title: "קוד",      style: "font-mono text-[11px]", action: () => applyFormat("`", "`") },
-    { label: "❝",  title: "ציטוט",    style: "",                      action: () => applyFormat("||", "||") },
+    { label: "S",   title: "קו חוצה",  style: "line-through",          action: () => applyFormat("<s>", "</s>") },
+    { label: "</>", title: "קוד",      style: "font-mono text-[11px]", action: () => applyFormat("<code>", "</code>") },
+    { label: "❝",  title: "ציטוט",    style: "",                      action: () => applyFormat("<blockquote>", "</blockquote> ") },
   ];
 
   return (

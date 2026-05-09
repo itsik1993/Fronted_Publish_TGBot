@@ -18,7 +18,7 @@ export default function CreateAd() {
   const [form, setForm] = useState({
     messagesname: "",
     messages_text: "",
-    messages_links: [[{ name: "", url: "" }]],
+    messages_links: [[{ text: "", url: "" }]],
     messages_media: null,
     datestart: "", firsttimestart: "",
     dateend: "", endtime: "",

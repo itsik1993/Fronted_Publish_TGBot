@@ -28,7 +28,7 @@ export default function LinksSection({ form, setForm }) {
                     const updated = form.messages_links
                       .map((r, ri) => ri === rowIdx ? r.filter((_, li) => li !== linkIdx) : r)
                       .filter(r => r.length > 0);
-                    setForm({ ...form, messages_links: updated.length ? updated : [[{ name: "", url: "" }]] });
+                    setForm({ ...form, messages_links: updated.length ? updated : [[{ text: "", url: "" }]] });
                   }}
                   className="w-5 h-5 mt-2 rounded-md bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] cursor-pointer hover:bg-red-500/20 transition-all shrink-0 flex items-center justify-center"
                 >✕</button>
@@ -37,10 +37,10 @@ export default function LinksSection({ form, setForm }) {
                   <input
                     type="text"
                     placeholder="שם הכפתור"
-                    value={link.name}
+                    value={link.text}
                     onChange={e => {
                       const updated = form.messages_links.map((r, ri) =>
-                        ri === rowIdx ? r.map((l, li) => li === linkIdx ? { ...l, name: e.target.value } : l) : r
+                        ri === rowIdx ? r.map((l, li) => li === linkIdx ? { ...l, text: e.target.value } : l) : r
                       );
                       setForm({ ...form, messages_links: updated });
                     }}
@@ -65,7 +65,7 @@ export default function LinksSection({ form, setForm }) {
                     title="הוסף לידו (חצי שורה)"
                     onClick={() => {
                       const updated = form.messages_links.map((r, ri) =>
-                        ri === rowIdx ? [...r, { name: "", url: "" }] : r
+                        ri === rowIdx ? [...r, { text: "", url: "" }] : r
                       );
                       setForm({ ...form, messages_links: updated });
                     }}
@@ -88,20 +88,20 @@ export default function LinksSection({ form, setForm }) {
       </div>
 
       <button
-        onClick={() => setForm({ ...form, messages_links: [...form.messages_links, [{ name: "", url: "" }]] })}
+        onClick={() => setForm({ ...form, messages_links: [...form.messages_links, [{ text: "", url: "" }]] })}
         className="w-full flex items-center justify-center gap-1 bg-white/[0.04] border border-dashed border-white/15 rounded-xl py-2 text-gray-500 text-[12px] cursor-pointer hover:border-indigo-500/40 hover:text-indigo-300 transition-all"
       >
         ↵ שורה חדשה
       </button>
 
-      {form.messages_links.some(row => row.some(l => l.name)) && (
+      {form.messages_links.some(row => row.some(l => l.text)) && (
         <div className="mt-3 pt-3 border-t border-white/[0.06]">
           <div className="text-[10px] text-gray-600 mb-2 text-right">תצוגה מקדימה</div>
           {form.messages_links.map((row, ri) => (
             <div key={ri} className="flex gap-1.5 mb-1.5">
-              {row.map((link, li) => link.name && (
+              {row.map((link, li) => link.text && (
                 <div key={li} className="flex-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[12px] font-medium rounded-xl px-3 py-1.5 text-center">
-                  {link.name}
+                  {link.text}
                 </div>
               ))}
             </div>
