@@ -36,13 +36,13 @@ function Root( {isAuth , isLoading} ) {
 function App() {
   const{ isAuth , isLoading } = useContext(AuthContext)
 console.log(isLoading,"this is the isLoading")
-const test=true;
+// const test=true;
 
   console.log(isAuth,"this is the first isAuth")
     const router = createBrowserRouter(
     createRoutesFromElements(
-      // <Route path="/" element={<Root isAuth={isAuth} isLoading={isLoading} />} errorElement={<Page404 />}>
-       <Route path="/" element={<Root isAuth={test} isLoading={isLoading} />} errorElement={<Page404 />}> 
+      <Route path="/" element={<Root isAuth={isAuth} isLoading={isLoading} />} errorElement={<Page404 />}>
+      {/* //  <Route path="/" element={<Root isAuth={test} isLoading={isLoading} />} errorElement={<Page404 />}>  */}
         {/* Main Routes */}
         <Route index element={<HomePage />} />
    
